@@ -1,5 +1,6 @@
 package com.employeeServices.Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,9 @@ import com.employeeServices.repo.EmployeeRepo;
 import com.employeeServices.responses.EmployeeResponse;
 import com.employeeServices.service.EmployeeService;
 
+import feign.Response;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 
 @RestController
@@ -32,18 +35,23 @@ public class EmployeeController {
 	private EmployeeService employeeService;
 	
 	@GetMapping("")
-	public List<Employee> getAllEmployees() {
+	@RateLimiter(name = "addressEmployeeRateLimiter", fallbackMethod = "callBackForGetEmployee")
+	public ResponseEntity< List<Employee>> getAllEmployees() {
 		List<Employee> employees = employeeService.getAllEmployee();
-		return employees;
+		return ResponseEntity.status(HttpStatus.OK).body(employees);
 	}
 	
-	int retryCount = 1;
+	ResponseEntity< List<Employee> > callBackForGetEmployee(Exception ex){
+		List<Employee> employees = new ArrayList<Employee>(); 
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(employees);
+	}
+	
+	
 	@GetMapping("/{id}")
 //	@CircuitBreaker(name = "addressEmployeeBreaker", fallbackMethod = "addressFallBack")
 	@Retry(name = "addressEmployeeRetry", fallbackMethod = "addressFallBack")
+	@RateLimiter(name = "addressEmployeeRateLimiter", fallbackMethod = "addressFallBack")
 	ResponseEntity<EmployeeResponse> getEmployeeDetails(@PathVariable("id") int id) {
-		System.out.println("----------------------------------------"+retryCount);
-		retryCount+=1;
 		EmployeeResponse employeeResponse =  employeeService.getEmployeeById(id);
 		return ResponseEntity.status(HttpStatus.OK).body(employeeResponse);
 	}
@@ -55,7 +63,9 @@ public class EmployeeController {
 	
 	@PostMapping("/add")
 	@Transactional
-	@CircuitBreaker(name = "addressEmployeeBreaker", fallbackMethod = "callBackForAddEmployee")
+	//@CircuitBreaker(name = "addressEmployeeBreaker", fallbackMethod = "callBackForAddEmployee")
+	@Retry(name = "addressEmployeeBreaker", fallbackMethod = "callBackForAddEmployee")
+	@RateLimiter(name = "addressEmployeeRateLimiter", fallbackMethod = "callBackForAddEmployee")
 	ResponseEntity<String> addEmployee(@RequestBody EmployeeResponse employeeResponse){
 		employeeService.addEmployee(employeeResponse);
 		return ResponseEntity.status(HttpStatus.CREATED).body("Successfully Created");
