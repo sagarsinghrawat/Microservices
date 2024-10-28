@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.employeeServices.responses.AddressResponse;
 
-@FeignClient(name = "address-services", path="/address-app/api")
+@FeignClient(name = "address-services", path="/api")
 public interface AddressClient {
 	
 	@GetMapping("/address/{employeeId}")

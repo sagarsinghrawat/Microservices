@@ -90,7 +90,7 @@ public class EmployeeService {
 //		
 //		
 //		//Load balancer using annotation -> @LoadBalanced in ResTemplate Bean in java config file
-		return restTemplate.getForObject("http://address-services/address-app/api/address/{employeeId}",AddressResponse.class,id);
+		return restTemplate.getForObject("http://address-services/api/address/{employeeId}",AddressResponse.class,id);
 	}
 	
 //	public AddressResponse callWebClientToAddressService(int id) {
@@ -112,7 +112,7 @@ public class EmployeeService {
 //	
 	
 	public ResponseEntity<String> callRestTemplateToAddEmployeeAddress(AddressResponse addressResponse) {
-		ResponseEntity<String> responseEntity = restTemplate.postForEntity("http://address-services/address-app/api/address/add", addressResponse, String.class);
+		ResponseEntity<String> responseEntity = restTemplate.postForEntity("http://address-services/api/address/add", addressResponse, String.class);
 		return responseEntity;
 	}
 	public String addEmployee(EmployeeResponse employeeResponse) {
